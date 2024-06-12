@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kaitlyn Setlist Maker</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-image: url("fll.jpg");
+        background-size: cover;
+        background-position: right 20% center;
+        background-repeat: no-repeat;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .hide {
+        visibility: hidden;
+      }
+      input,
+      button {
+        width: 90%;
+        margin: 10px auto;
+        display: block;
+        background-color: black;
+        color: white;
+      }
+      #searchInput {
+        height: 50px;
+        font-weight: bold;
+        color: white;
+        background-color: black; /* Ensure the background is black for contrast */
+      }
+
+      #masterList,
+      #setList {
+        width: 45%;
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid black;
+        overflow-y: auto;
+        height: 400px;
+        background-color: white;
+      }
+
+      .song {
+        margin: 5px;
+        padding: 5px;
+        border: 1px solid grey;
+        cursor: pointer;
+        background-color: white;
+      }
+
+      .song:hover {
+        background-color: lightgrey;
+      }
+
+      #linkModal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      #linkModalContent {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+
+      #closeModal {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="Search songs..."
+      oninput="filterSongs()"
+      style="
+        height: 50px;
+        font-weight: bold;
+        color: white;
+        background-color: rgb(35, 196, 225);
+        border: none;
+        outline: none;
+        width: 25%; /* Adjust the width to be about half */
+        margin: 10px 0 10px 15px; /* Adjust left margin to position it to the right */
+      "
+    />
+    <div id="masterList" tabindex="0"></div>
+    <div id="setList"></div>
+    <button onclick="copySetlist()">Copy Setlist</button>
+
+    <div id="linkModal">
+      <div id="linkModalContent">
+        <span id="closeModal" onclick="closeModal()">&times;</span>
+        <iframe id="modalIframe" style="width: 100%; height: 400px"></iframe>
+      </div>
+    </div>
+
+    <script>
+      function copySetlist() {
+        const setListText = setList
+          .map(
+            (song) =>
+              `${song.name} - ${song.bpm ? song.bpm + " bpm" : ""} ${
+                song.capo ? "capo " + song.capo : ""
+              }`
+          )
+          .join("\n");
+        navigator.clipboard
+          .writeText(setListText)
+          .then(() => {
+            alert("Setlist copied to clipboard!");
+          })
+          .catch((err) => {
+            console.error("Failed to copy text: ", err);
+          });
+      }
+
+      let originalSongs = [];
+      let masterSongs = [];
+      let setList = [];
+
+      // Define your song list here
+      const songList = [
+        {
+          title: "Ain't Nobody <i>104 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Ain’t Nobody/In The Air_U 104 bpm capo 6",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Ain’t no mountain_U 129 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Alright now <i>123 bpm</i> loop: 46",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "All i wanna do <i>120 bpm</i> loop: 43",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "All My Lovin_U 156 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "American Boy <i>118 bpm</i> loop: 38",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "American Boy E _U 118 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "American Boy E _S 115 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "American Girl <i>230 bpm</i> loop: 8",
+          link: "https://toddmccool.github.io/chordprog124/fourFiveOneSix.html#topOffourFiveOneSixList",
+        },
+        {
+          title: "American Girl D _U 115 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourFiveOneSix.html#topOffourFiveOneSixList",
+        },
+        {
+          title: "and I Love Her Beatles_S 113 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Animals Medley_U 148 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "Any way you want it_U capo 0 138 bpm",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Are You Gonna Be My Girl_U 105 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "as it was <i>174 bpm</i> loop: 80",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "As It Was_U 174 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "At Last _S 87 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneSixFourFive.html#topOfoneSixFourFiveList",
+        },
+        {
+          title: "Baby its cold outside_S 86 bpm G capo 3",
+          link: "",
+        },
+        {
+          title: "Bad Habits_U 126 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/sixOneFourFive.html#sixOneFourFiveList",
+        },
+        {
+          title: "Bad bad Leroy Brown_U 148 bpm capo 3",
+          link: "",
+        },
+        {
+          title:
+            "Believe /Do you believe in life after love Cher/ _U 133 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveTwoFour.html#oneFiveTwoFourList",
+        },
+        {
+          title: "Bennie & the jets <i>72 bpm</i> loop: 9",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Benny and the Jets_U 72 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Best Day Of My Life_U 100 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Billie Jean_U 120 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "Black Velvet Emi_S _U 85 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "Blackbird_S 94 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Blackhorse and a cherry tree_U 105 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Bless the broken road_S 68 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Blister In The Sun_U 97 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Boots were made for walking <i>164 bpm</i> loop: 77",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "Brandy_U 125 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Brass in Pocket <i>98 bpm</i> loop: 15",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/oneSixFourFive.html#topOfoneSixFourFiveList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+            },
+          ],
+        },
+        {
+          title: "Brass in Pocket <i>the pretenders</i>_S 107 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "BreakDown <i>114 bpm</i> loop: 33",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Breakfast at tiffanys_U 113 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Brkfst at Tifnys <i>112 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Broken Hearted/Just The Way You Are/YMCA_U 120 bpm capo 1",
+          link: "https://toddmccool.github.io/chordprog124/oneSixFourFive.html#topOfoneSixFourFiveList",
+        },
+        {
+          title: "Brown eyed girl <i>149 bpm</i> loop: 70",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Brown eyed girl - original bpm <i>78 bpm</i> loop: 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Brown eyed / i’m a believer <i>149 bpm</i> loop: 70",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Brown eyed / i’m a believer <i>155 bpm</i> loop: 75",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Brown eyed girl i’m a believer_U 154 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Burn/Cheap Thrills_U capo 2 174 bpm",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "Cake by the ocean <i>120 bpm</i> loop: 42",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Cake by the Ocean Emi_U 119 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "California Dreamin_S 113 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "California Girls_U capo 5 125 bpm",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Can’t Hurry Love_U 196 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Can’t stop the feelin’_U 113 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneSixFourFive.html#topOfoneSixFourFiveList",
+        },
+        {
+          title: "Carolina <i>90 bpm</i> loop: 90",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Carolina_S 75 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Carry On My Wayward Son Ami_U 125 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Chasing Cars_S 109 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/oneFive.html#oneFiveList",
+        },
+        {
+          title: "Cheap Thrills_U 90 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "Close To You they long to be_S 88 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Closer C _U capo 1 95 bpm",
+          link: "https://toddmccool.github.io/chordprog124/fourFiveSix.html#topOffourFiveSixList",
+        },
+        {
+          title: "Come and Get your love D ii V I vi_U 107 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "Complicated _S 78 bpm capo 5",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "Crazy (gnarls) /sweet dreams <i>116 bpm</i> loop: 35",
+          link: "https://toddmccool.github.io/chordprog124/sixOneFourFive.html#sixOneFourFiveList",
+        },
+        {
+          title: "Crazy Bb patsy klein_S 71 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Crazy Gnarls Barkley _U _S capo 112 bpm capo 3",
+          link: "https://toddmccool.github.io/chordprog124/sixOneFourFive.html#topOfsixOneFourFiveList",
+        },
+        {
+          title: "Crazy (patsy c) <i>76 bpm</i> loop: 0",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Crazy In Love Bb _U 99 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Crazy in love _U 99 bpm G E capo 3",
+          link: "",
+        },
+        {
+          title: "Crazy little thing called love <i>154 bpm</i> loop: 74",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Crazy little thing called love D_U 154 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+        },
+        {
+          title: "Crazy Love _S 77 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Cry me a river v / ch Emi B _S 74 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Dance monkey _U 98 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Dance the Night <i>110 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "Dancin on my own Robyn _S 117 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "Dancing In the Dark Bruce S. _U 149 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "Daniel _S 132 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Deez Boots Were Made _U 166 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Don’t Know Why_S 89 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Don't know why <i>88 bpm</i> loop: 4",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Don't start now slower <i>120 bpm</i> loop: 39",
+          link: [
+            {
+              text: "verse/chorus",
+              url: "https://toddmccool.github.io/chordprog124/twoSix.html#twoSixList",
+            },
+            {
+              text: "intro/bridge...out",
+              url: "https://toddmccool.github.io/chordprog124/sixOneFourFive.html#sixOneFourFiveList",
+            },
+          ],
+        },
+        {
+          title: "Don't start now slower <i>124 bpm</i> loop: 45",
+          link: [
+            {
+              text: "verse/chorus",
+              url: "https://toddmccool.github.io/chordprog124/twoSix.html#twoSixList",
+            },
+            {
+              text: "intro/bridge...out",
+              url: "https://toddmccool.github.io/chordprog124/sixOneFourFive.html#sixOneFourFiveList",
+            },
+          ],
+        },
+        {
+          title: "Don’t start now_U 124 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Don’t Stop Believing Journey_U 188 bpm capo 4",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Don’t u 4get <i>112 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "Don't original / _S capo 1",
+          link: "",
+        },
+        {
+          title: "Dream On _S 74 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Dreams <i>120 bpm</i> loop: 40",
+          link: "https://toddmccool.github.io/chordprog124/fourFive.html#topOffourFiveList",
+        },
+        {
+          title:
+            "Dreams /little red corvette/I’ll be around/Rebel rebel/Don’t you want me baby_S 120 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourFive.html#topOffourFiveList",
+        },
+        {
+          title: "Dancing In the Dark Bruce S. _U 149 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "Daniel _S 132 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Deez Boots Were Made _U 166 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Domino_U 127 bpm  ",
+          link: "https://toddmccool.github.io/chordprog124/fourTwoSixFive.html#topOffourTwoSixFiveList",
+        },
+        {
+          title: "Dream On _S 74 bpm capo 1",
+          link: "",
+        },
+
+        {
+          title:
+            "Dreams /little red corvette/I’ll be around/Rebel rebel/Don’t you want me baby_S , _U    120 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourFive.html#topOffourFiveList",
+        },
+
+        {
+          title: "Easy 133 bpm _S 67 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Enough original / capo 3",
+          link: "",
+        },
+        {
+          title:
+            "Espresso (Butter /king of wishful thinking / Dynamite 6514) <i>104 bpm</i> loop: 24",
+          link: [
+            {
+              text: "Link",
+              url: "https://toddmccool.github.io/chordprog124/fourFive.html#topOffourFiveList",
+            },
+            {
+              text: "    chart/lyrics",
+              url: "espressomedley.html",
+            },
+          ],
+        },
+        {
+          title: "Espresso <i>(chill)</i>_S 104 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourSixFive.html#topOffourSixFiveList",
+        },
+        {
+          title: "Espresso <i>(upbeat)</i>_U 104 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourSixFive.html#topOffourSixFiveList",
+        },
+        {
+          title: "Every littleThing she does is Magic_U 164 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourFive.html#topOffourFiveList",
+        },
+        {
+          title: "Everybody Talks _U 155 bpm capo 3",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Everywhere <i>108 bpm</i> loop: 27",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Ex’s and Oh’s Emi_U _S 130 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Fade n2 u <i>89 bpm</i> loop: 52",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Faith (with footloose/karma chameleon)_U 174 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Faith (original tempo)_U 164 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Fast Car <i>104 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/fourOneSixFive.html#topOffourOneSixFiveList",
+        },
+        {
+          title: "Fast Car _S 104 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/fourOneSixFive.html#topOffourOneSixFiveList",
+        },
+        {
+          title: "Fat Bottom girls _U 87 bpm capo 0 capo -2 174 bpm capo -2",
+          link: "",
+        },
+        {
+          title: "February capo capo 3",
+          link: "",
+        },
+        {
+          title: "Feel It Still/hit the road jack _U 79 bpm capo 4 158 bpm",
+          link: "",
+        },
+        {
+          title: "Feel for you Bmi _U 125 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Fever Ami _S 135 bpm capo 0 68 bpm",
+          link: "",
+        },
+        {
+          title: "Fire & Rain _S 76 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Fire loop <i>171 bpm</i> loop: 80",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/fiveFour.html#fiveFourList",
+            },
+          ],
+        },
+        {
+          title: "Flowers<i>118 bpm</i> loop: 37",
+          link: "https://toddmccool.github.io/chordprog124/sixTwoFiveOne.html#topOfsixTwoFiveOneList",
+        },
+        {
+          title: "Flowers _U _S 118 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixTwoFiveOne.html#topOfsixTwoFiveOneList",
+        },
+        {
+          title: "Fly me to the moon <i>126 bpm</i> loop: 47",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Fly me to the moon _S capo 3",
+          link: "",
+        },
+        {
+          title: "Footloose <i>174 bpm</i> loop: 80",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "Footloose _U 174 bpm capo 0",
+          link: "",
+        },
+        {
+          title:
+            "Funky Music /I Wish/Superstition/Stayin Alive/Get Down Tonight/ _U 106 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Funk <i>103 bpm</i> loop: 23",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Georgia on my mind G_S 105 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Get back <i>123 bpm</i> loop: 46",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "Get Lucky _U 116 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/twoFourOneFive.html#twoFourSixFiveList",
+        },
+        {
+          title: "Gimme one reason <i>100 bpm</i> loop: 20",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "Go put your records on A _S 95 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Go your way <i>135 bpm</i> loop: 61",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/oneFive.html#oneFiveList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+            },
+          ],
+        },
+        {
+          title: "Go your way <i>135 bpm</i> loop: 61",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/oneFive.html#oneFiveList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+            },
+          ],
+        },
+        {
+          title: "Go Your Own Way G…D C…Ch: /_U 136 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "God Only knows _S capo 2",
+          link: "",
+        },
+        {
+          title: "HardtoHandle/Butterfly(crazyTown) <i>104 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/fiveFourOneFive.html#topOffiveFourOneFiveList",
+        },
+        {
+          title: "Hallelujah _S 97 bpm capo 7",
+          link: "",
+        },
+        {
+          title: "Happy Together Emi _S 108 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Happy _U 160 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Harvest Moon D_S 113 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Here comes the sun D_S 128 bpm capo 7",
+          link: "",
+        },
+        {
+          title: "Heroes Alesso_S 126 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Hey Jealousy <i>151 bpm</i> loop: 72",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/fourFiveSix.html#topOffourFiveSixList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+            },
+          ],
+        },
+        {
+          title: "HeyYa G mix_U 155 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Hit me with your best shot <i>128 bpm</i> loop: 52",
+          link: "https://toddmccool.github.io/chordprog124/oneFourSixFive.html#topOfoneFourSixFiveList",
+        },
+        {
+          title: "Hit the road/tainted love_U 144 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "Hotel California <i>74 bpm</i> loop: 2",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Hotel California Eagles_S 74 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "houdini / Training season <i>120 bpm</i> loop: 44",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "How Deep Is Your Love beegees_S 105 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "I believe In A Thing Called Love_U 128 bpm key E",
+          link: "https://example.com",
+        },
+        {
+          title: "I can't go for that <i>110 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "I cant help falling in love_S 100 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "I feel the earth move_U _S 120 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "I Wanna Dance With Somebody E _U 119 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "i’m a believer <i>162 bpm</i> loop: 79",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "I’m a Believer brown eyd grl _U 155 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "If you only knew original G chords / capo 2",
+          link: "",
+        },
+        {
+          title: "Jackson <i>130 bpm</i> loop: 59",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Jailhouse rock _U 167 bpm capo 0",
+          link: "",
+        },
+        {
+          title:
+            "jt Sad jams_ <i>what: Ami C G D // cry: Ami E | F Dmi _j.t. _</i> <i>77 bpm</i> loop: 99",
+          link: "https://toddmccool.github.io/chordprog124/sixOneFiveFour.html#topOfsixOneFiveFourList",
+        },
+        {
+          title: "Jolene _U _S 111 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "Just A Girl D _ _U 108 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Just like heaven <i>151 bpm</i> loop: 72",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveTwoFour.html#oneFiveTwoFourList",
+        },
+        {
+          title: "Just The Way You Are Billy Joel _S 139 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Karma chameleon _U 184 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Karma chameleon (w/Footloose/faith) _U 174 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Killing me softly <i>92 bpm</i> loop: 11",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Killing me softly Emi_S _92 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "King of Wishful Thinking <i>104 bpm</i> loop: 8",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/sixTwoFiveOne.html#topOfsixTwoFiveOneList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+            },
+          ],
+        },
+        {
+          title: "Kiss Me _ _S 100 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Kiss me ½ step down (D)_S 100 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "L.O.V.E key of D / _S 112 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Landslide <i>73 bpm</i> loop: 1",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Landslide G _ _S 159 bpm capo 7 _ 79 bpm",
+          link: "",
+        },
+        {
+          title: "Levitating <i>103 bpm</i> loop: 22",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Levitating _U 103 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Let’s stay together <i>102 bpm</i> loop: 21",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Lets stay together F _S 102 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Listen to the music E -> F /_U 107 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Little Lies <i>125 bpm</i> loop: 48",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Locked Out Of Heaven Heaven _U 144 bpm capo 4",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Long Run original / capo 3",
+          link: "",
+        },
+        {
+          title: "Long Train <i>117 bpm</i> loop: 36",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Long Train Runnin _U 117 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Long Way for now _U 111 bpm original / capo 3",
+          link: "",
+        },
+        {
+          title: "Love fool <i>112 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Lovefool _U _S 112 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixTwoFiveOne.html#topOfsixTwoFiveOneList",
+        },
+        {
+          title: "Love Me Like You Do_S 95 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Love Never Felt So Good_U 120 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Love Supply original /_U 188 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Love Yourself _S 107 bpm capo 4",
+          link: "",
+        },
+        {
+          title: "Love is all we own original / _U 116 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Lovely Day <i>98 bpm</i> loop: 17",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Lovesong Adele Version _U _S 117 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Love Song <i>140 bpm</i> loop: 67",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Make You Feel My Love _S 77 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Maneater <i>89 bpm</i> loop: 8",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/index.html#basicApp",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+            },
+          ],
+        },
+        {
+          title: "Maneater <i>89 bpm</i> loop: 8",
+          link: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+        },
+        {
+          title: "Maneater <i>89 bpm</i> loop: 8",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/index.html#basicApp",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+            },
+          ],
+        },
+        {
+          title: "Mary Janes last dance <i>86 bpm</i> loop: 16",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Mary Janes Last Dance _S 85 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Melt with you <i>156 bpm</i> loop: 71",
+          link: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+        },
+        {
+          title: "Melt With You C _U 154 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+        },
+        {
+          title: "Melt with you (atn) slower <i>145 bpm</i> loop: 69",
+          link: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+        },
+        {
+          title: "Moon dance <i>134 bpm</i> loop: 0",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "Moondance _S 134 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Moon river C _S capo 0",
+          link: "",
+        },
+        {
+          title: "Moves Like Jagger Bmi _U 120 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixTwoFiveOne.html#topOfsixTwoFiveOneList",
+        },
+        {
+          title: "Mr. blue sky _U F capo 0",
+          link: "",
+        },
+        {
+          title: "Maneater <i>89 bpm</i> loop: 8",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/index.html#basicApp",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/sixFiveFour.html#topOfsixFiveFourList",
+            },
+          ],
+        },
+        {
+          title:
+            "Natural Woman G chromatic walk down pre: ii iii _S 111 bpm capo 2",
+          link: "",
+        },
+        {
+          title:
+            "No Matter What _ w/you / won’t you / want you / w/you / want you / want you /_U 116 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Oh what a night _U 104 bpm capo 6",
+          link: "",
+        },
+        {
+          title: "Only The Good Die Young William Joel_U 152 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Peaceful Easy Feeling _S 143 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Penny lane _S 114 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Physical _U 124 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Picture Perfect original /_S capo 6",
+          link: "",
+        },
+        {
+          title: "Pour some sugar on me _U E capo 0",
+          link: "",
+        },
+        {
+          title: "Price Tag _E <i>88 bpm</i> loop: 0",
+          link: "https://toddmccool.github.io/chordprog124/oneThreeSix.html#oneThreeSixFourList",
+        },
+        {
+          title:
+            "Price Tag/Where Is The Love/party in the USA / __S _U 88 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Proud mary / Fire <i>171 bpm</i> loop: 0",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Put your records on <i>96 bpm</i> loop: 0",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Rainbow _S 65 bpm capo ",
+          link: "",
+        },
+        {
+          title: "Red red wine <i>89 bpm</i> loop: 8",
+          link: "https://toddmccool.github.io/chordprog124/oneFourFive.html#topOfOneFourFiveList",
+        },
+        {
+          title: "Rhiannon /Bossa <i>129 bpm</i> loop: 53",
+          link: [
+            {
+              text: "minor",
+              url: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+            },
+            {
+              text: "relative major",
+              url: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+            },
+          ],
+        },
+        {
+          title: "Rock this town <i>200 bpm</i> loop: 84",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Runnin down a Dream_U 170 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Saw her standing there <i>160 bpm</i> loop: 76",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "saw her standing there_U 162 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Save Tonight <i>120 bpm</i> loop: 41",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "Save Your Tears <i>118 bpm</i> loop: 37",
+          link: "https://toddmccool.github.io/chordprog124/oneSixFourFive.html#topOfoneSixFourFiveList",
+        },
+        {
+          title: "Selfish <i>88 bpm</i> loop: 4",
+          link: "https://toddmccool.github.io/chordprog124/fourFiveOneSix.html#topOffourFiveOneSixList",
+        },
+        {
+          title: "sedated _U 163 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Shut up and Dance <i>128 bpm</i> loop: 52",
+          link: "https://toddmccool.github.io/chordprog124/oneFourSixFive.html#topOfoneFourSixFiveList",
+        },
+        {
+          title: "Son of a preacher man <i>91 bpm</i> loop: 10",
+          link: "https://toddmccool.github.io/chordprog124/fiveOneFourOne.html#topOffiveOneFourOne",
+        },
+        {
+          title: "Stir it up <i>74 bpm</i> loop: 3",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Still The One Shania Twain _S 67 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Starting at the finish line G_S 116 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "style <i>95 bpm</i> loop: 13",
+          link: [
+            {
+              text: "verse",
+              url: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+            },
+            {
+              text: "chorus",
+              url: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+            },
+          ],
+        },
+        {
+          title: "Style t swift_S 95 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/oneFour.html#topOfoneFourList",
+        },
+        {
+          title: "Summer of 69 <i>139 bpm</i> loop: 65",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Summer Of sixtynine_U 136 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFive.html#oneFiveList",
+        },
+        {
+          title: "Sunday morning <i>88 bpm</i> loop: 5",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "Sunday Morning _S 88 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/twoFive.html#twoFiveList",
+        },
+        {
+          title: "sweet dreams/Crazy (gnarls) <i>125 bpm</i> loop: 48",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Sweet caroline_U 126 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Sweet Dreams havana _S 125 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Take it easy <i>139 bpm</i> loop: 65",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Take It Easy Eagles_U 139 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Take me home country Road_U 82 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Teenage Dream G_ _S _U 120 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Tennessee whiskey_S 98 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneTwoSix.html#topOfOneTwoList",
+        },
+        {
+          title: "Tennessee Whiskey/Fade n2 u <i>89 bpm</i> loop: 52",
+          link: "https://toddmccool.github.io/chordprog124/oneTwoSix.html#topOfOneTwoList",
+        },
+        {
+          title:
+            "The First Cut is the Deepest Cat Stevens/Sheryl_S 80 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneFive.html#oneFiveList",
+        },
+        {
+          title: "The Heart Wants What It Wants_S 86 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "the Weekend<i>102 bpm</i> loop: 22",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "The Way You Make Me Feel _S capo 2",
+          link: "",
+        },
+        {
+          title: "way you make me feel <i>114 bpm</i> loop: 30",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "The way you look tonight Eb_S 133 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/oneSixFourFive.html#topOfoneSixFourFiveList",
+        },
+        {
+          title: "the Climb _S 161 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "This Love _U 95 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Time after time C_S 130 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Time in a Bottle_S capo 5",
+          link: "",
+        },
+        {
+          title: "Tiny dancer <i>73 bpm</i> loop: 1",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Tiny Dancer_S 145bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Tipsy <i>162 bpm</i> loop: 79",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "Titanium/Young & Beautiful/Clarity_S 126 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Toxic acoustic <i>138 bpm</i> loop: 64",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Training season /houdini <i>120 bpm</i> loop: 44",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Treasure_U 116 bpm capo 3",
+          link: "",
+        },
+        {
+          title: "Umbrella C _S capo 0",
+          link: "",
+        },
+        {
+          title: "Unforgettable F_S capo 0",
+          link: "",
+        },
+        {
+          title: "Upside down <i>102 bpm</i> loop: 22",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "Valerie <i>106 bpm</i> loop: 25",
+          link: "https://toddmccool.github.io/chordprog124/oneTwoSix.html#topOfOneTwoList",
+        },
+        {
+          title: "Valerie (slower) <i>103 bpm</i> loop: 19",
+          link: "https://toddmccool.github.io/chordprog124/oneTwoSix.html#topOfOneTwoList",
+        },
+        {
+          title: "Valerie Eb_U 105 bpm capo 3",
+          link: "https://toddmccool.github.io/chordprog124/oneTwoSix.html#topOfOneTwoList",
+        },
+        {
+          title: "Waiting for you C_S 82 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Wagon Wheel_U 148 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/oneFiveSixFour.html#topOfOneFiveSixFourList",
+        },
+        {
+          title: "Watermelon sugar <i>95 bpm</i> loop: 13",
+          link: "https://toddmccool.github.io/chordprog124/twoSix.html#twoSixList",
+        },
+        {
+          title: "Watermelon sugar Dmi_S _U 95 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/twoSix.html#twoSixList",
+        },
+        {
+          title: "Wasabi Dream_U 207 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "We are family _U 116 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "We Are Young fst capo 92 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "We Found Love/Latch_S 128 bpm capo 5",
+          link: "",
+        },
+        {
+          title: "What a wonderful world F original/ _S male key capo 0",
+          link: "",
+        },
+        {
+          title: "What i like about you E _U 161 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Whats Goin On_S _U 102 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "While My Guitar Gently Weeps_S 118 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "Wide Open Spaces_S 90 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/oneTwoSix.html#topOfOneTwoList",
+        },
+        {
+          title: "Wild World _S 76 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/sixTwoFiveOne.html#topOfsixTwoFiveOneList",
+        },
+        {
+          title: "Wish You Were Here C _S 61 bpm capo 6",
+          link: "",
+        },
+        {
+          title: "Wonderwall _S 88 bpm capo 2",
+          link: "https://toddmccool.github.io/chordprog124/twoFourOneFive.html#topOftwoFourOneFiveList",
+        },
+        {
+          title: "Wooden bridges G _U 210 bpm capo 2",
+          link: "",
+        },
+        {
+          title: "Yellow brick road _S 121 bpm capo 1",
+          link: "",
+        },
+        {
+          title: "Yesterday _S 97 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "You are the best thing <i>89 bpm</i> loop: 7",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "You Gotta Be Angel Of Mine Human Nature_S 94 bpm capo 0",
+          link: "https://toddmccool.github.io/chordprog124/fourFiveSix.html#topOffourFiveSixList",
+        },
+        {
+          title: "You may be right <i>151 bpm</i> loop: 73",
+          link: "https://toddmccool.github.io/chordprog124/",
+        },
+        {
+          title: "You may be right key of A_U 150 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "You’re so vain _S 106 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "You’re Still The One _S Shania Twain capo 1",
+          link: "",
+        },
+        {
+          title: "You're so vain <i>104 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+        {
+          title: "you’re no good _S 105 bpm capo 0",
+          link: "",
+        },
+        {
+          title: "You’re Still The One _S Shania Twain capo 1",
+          link: "",
+        },
+
+        {
+          title: "You're so vain <i>104 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+
+        {
+          title: "You’re Still The One _S Shania Twain capo 1",
+          link: "",
+        },
+        {
+          title: "you're so vain <i>104 bpm</i> loop: 24",
+          link: "https://toddmccool.github.io/chordprog124/sixFourOneFive.html#topOfsixFourOneFiveList",
+        },
+      ];
+
+      function normalizeString(str) {
+        return str.replace(/[\u2019'’]/g, "").toLowerCase();
+      }
+
+      function parseSongs() {
+        originalSongs = songList.map((song, index) => {
+          const bpmMatch = song.title.match(/(\d+) bpm/);
+          const bpm = bpmMatch ? parseInt(bpmMatch[1]) : null;
+          const capoMatch = song.title.match(/capo (\d+)/);
+          const capo = capoMatch ? parseInt(capoMatch[1]) : null;
+          const type = song.title.includes("_U")
+            ? "_U"
+            : song.title.includes("_S")
+            ? "_S"
+            : null;
+          return {
+            id: index,
+            link: song.link,
+            name: song.title.replace(/(\d+ bpm|capo \d+)/g, "").trim(),
+            bpm,
+            capo,
+            type, // Store the type explicitly
+          };
+        });
+        masterSongs = [...originalSongs];
+        displaySongs("masterList", masterSongs);
+      }
+
+      function updateSuggestions() {
+        if (!setList.length) return; // Exit if setList is empty
+        const lastSelectedSong = setList[setList.length - 1];
+
+        // Sort masterSongs based on type match, then bpm and capo proximity
+        masterSongs.sort((a, b) => {
+          const typeMatchA = a.type === lastSelectedSong.type ? 0 : 1; // 0 if matches, 1 otherwise
+          const typeMatchB = b.type === lastSelectedSong.type ? 0 : 1;
+
+          const bpmDiffA = Math.abs(a.bpm - lastSelectedSong.bpm);
+          const bpmDiffB = Math.abs(b.bpm - lastSelectedSong.bpm);
+          const capoDiffA = Math.abs(
+            (a.capo || 0) - (lastSelectedSong.capo || 0)
+          );
+          const capoDiffB = Math.abs(
+            (b.capo || 0) - (lastSelectedSong.capo || 0)
+          );
+
+          // First sort by type, then by bpm difference, then by capo difference
+          if (typeMatchA !== typeMatchB) {
+            return typeMatchA - typeMatchB;
+          } else if (bpmDiffA !== bpmDiffB) {
+            return bpmDiffA - bpmDiffB;
+          } else {
+            return capoDiffA - capoDiffB;
+          }
+        });
+
+        displaySongs("masterList", masterSongs);
+      }
+
+      function displaySongs(containerId, songs) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = ""; // Clear existing entries
+        songs.forEach((song) => {
+          const songDiv = document.createElement("div");
+          songDiv.className = "song";
+          songDiv.style.padding = "10px"; // Adding padding for better click area
+
+          const songNameSpan = document.createElement("span");
+          // Insert text content and wrap _U or _S in a span with a special class
+          songNameSpan.innerHTML =
+            song.name.replace(/(_U|_S)/g, '<span class="hide">$1</span>') +
+            ` - ${song.bpm ? song.bpm + " bpm" : ""} ${
+              song.capo ? "capo " + song.capo : ""
+            }`;
+          songDiv.appendChild(songNameSpan);
+
+          if (song.link) {
+            const link = document.createElement("a");
+            link.href = "#";
+            link.style.marginLeft = "10px";
+            link.textContent = "(Link)";
+            link.onclick = (e) => {
+              e.preventDefault(); // Prevent the default anchor action
+              e.stopPropagation(); // Stop the click event from bubbling to the parent div
+              openModal(song.link); // Call the modal function
+            };
+            songDiv.appendChild(link);
+          }
+
+          songDiv.addEventListener("click", () => {
+            if (containerId === "masterList") {
+              selectSong(song);
+            } else if (containerId === "setList") {
+              deselectSong(song);
+            }
+          });
+
+          container.appendChild(songDiv);
+        });
+      }
+
+      // Add CSS to hide the tags
+      // This can be added in the <style> section of your HTML
+
+      function openModal(url) {
+        const modal = document.getElementById("linkModal");
+        const iframe = document.getElementById("modalIframe");
+        iframe.src = url; // Set the iframe source to the URL
+        modal.style.display = "block"; // Display the modal
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("linkModal");
+        modal.style.display = "none";
+        const iframe = document.getElementById("modalIframe");
+        iframe.src = ""; // Clear the iframe source
+      }
+
+      function selectSong(song) {
+        setList.push(song);
+        masterSongs = masterSongs.filter((s) => s.id !== song.id);
+        displaySongs("masterList", masterSongs);
+        displaySongs("setList", setList);
+        updateSuggestions();
+
+        // Scroll the master list back to the top
+        const masterListDiv = document.getElementById("masterList");
+        masterListDiv.scrollTop = 0; // Set the scroll position to the top
+      }
+
+      function deselectSong(song) {
+        setList = setList.filter((s) => s.id !== song.id);
+        masterSongs.push(song);
+        displaySongs("masterList", masterSongs);
+        displaySongs("setList", setList);
+        updateSuggestions();
+      }
+
+      function updateSuggestions() {
+        if (!setList.length) return; // Exit if setList is empty
+        const lastSelectedSong = setList[setList.length - 1];
+        const lastSongType = lastSelectedSong.name.includes("_U") ? "_U" : "_S"; // Determine the type of the last selected song
+
+        // Sort masterSongs based on type match, then bpm and capo proximity
+        masterSongs.sort((a, b) => {
+          const typeMatchA = a.name.includes(lastSongType) ? 0 : 1; // 0 if matches, 1 otherwise
+          const typeMatchB = b.name.includes(lastSongType) ? 0 : 1;
+
+          const bpmDiffA = Math.abs(a.bpm - lastSelectedSong.bpm);
+          const bpmDiffB = Math.abs(b.bpm - lastSelectedSong.bpm);
+          const capoDiffA = Math.abs(
+            (a.capo || 0) - (lastSelectedSong.capo || 0)
+          );
+          const capoDiffB = Math.abs(
+            (b.capo || 0) - (lastSelectedSong.capo || 0)
+          );
+
+          // First sort by type, then by bpm difference, then by capo difference
+          if (typeMatchA !== typeMatchB) {
+            return typeMatchA - typeMatchB;
+          } else if (bpmDiffA !== bpmDiffB) {
+            return bpmDiffA - bpmDiffB;
+          } else {
+            return capoDiffA - capoDiffB;
+          }
+        });
+
+        displaySongs("masterList", masterSongs);
+      }
+
+      function filterSongs() {
+        const searchText = normalizeString(
+          document.getElementById("searchInput").value
+        );
+        const filteredSongs = originalSongs.filter((song) =>
+          normalizeString(song.name).includes(searchText)
+        );
+        displaySongs("masterList", filteredSongs);
+      }
+
+      window.onload = parseSongs;
+    </script>
+  </body>
+</html>
